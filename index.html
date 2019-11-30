@@ -1,0 +1,367 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>Scoutred - Property zoning and land use search</title>
+		
+	<meta charset="utf-8">
+	<meta http-equiv="Content-Language" content="en">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	
+	<meta name="format-detection" content="telephone=no">
+	
+	
+	<link rel="apple-touch-icon" sizes="180x180" href="static/shortcut-icons/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="static/shortcut-icons/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="static/shortcut-icons/favicon-16x16.png">
+	<link rel="manifest" href="static/shortcut-icons/site.webmanifest">
+	<link rel="mask-icon" href="static/shortcut-icons/safari-pinned-tab.svg" color="#cc1717">
+	<link rel="shortcut icon" href="static/shortcut-icons/favicon.ico">
+	<meta name="msapplication-TileColor" content="#ffffff">
+	<meta name="msapplication-config" content="/static/shortcut-icons/browserconfig.xml">
+	<meta name="theme-color" content="#ffffff">
+
+	
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<link href="static/lib/bootstrap/v4.1.3/css/bootstrap.min.css" rel="stylesheet">
+	<link href="static/css/common.css" rel="stylesheet">	
+
+		<meta name="description" content="Easily find property owner information, zoning details and download parcel lot lines in AutoCAD format.">
+
+		<link href="static/lib/bootstrap/v4.1.3/css/bootstrap.min.css" rel="stylesheet">
+		<link href='static/lib/mapbox-gl-js/v1.1.1/mapbox-gl.css' rel='stylesheet' />
+		<link href="static/css/homepage.css" rel="stylesheet">
+
+		
+		<script type="application/ld+json">{"@context":"http://schema.org/","@type":"Organization","address":{"@type":"PostalAddress","streetAddress":"1043 6th ave","addressLocality":"San Diego","addressRegion":"CA","postalCode":"92101","addressCountry":"United States"},"email":"mailto:hello@scoutred.com","founder":"Alexander Rolek","name":"Scoutred","sameAs":["https://twitter.com/scoutredhq","https://www.linkedin.com/company/scoutred"],"url":"https://scoutred.com"}</script>
+	</head>
+	<body>
+		
+<nav id="top-nav" class="navbar navbar-expand-md">
+	<a class="navbar-brand" href="index.html"><img src="static/assets/core/scoutred-icon.svg" width="30" height="30" class="d-inline-block align-top"/> Scoutred</a>
+	<button class="btn btn-link d-md-none p-0 ml-3" v-on:click="toggleShowMenu" type="button" data-toggle="collapse" data-target="#bd-docs-nav" aria-controls="bd-docs-nav" aria-expanded="false" aria-label="Toggle docs navigation">
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30" width="30" height="30" focusable="false">
+			<title>Menu</title>
+			<path stroke="#212529" stroke-width="2" stroke-linecap="round" stroke-miterlimit="10" d="M4 7h22M4 15h22M4 23h22"></path>
+		</svg>
+	</button>
+	<div class="navbar-collapse d-none d-md-inline" v-bind:class="{'d-inline border-bottom': showMenu}" v-cloak>
+		<ul class="navbar-nav ml-auto">
+			<li class="nav-item pr-3">
+				<a class="nav-link" href="pricing">PRICING</a>
+			</li>
+			<li class="nav-item d-none d-md-inline border-right"></li>
+			
+			<li class="nav-item pl-md-3 pr-3">
+				<a class="nav-link" href="maps/auth/login">LOG IN</a>
+			</li>
+			<li class="nav-item">
+				<a class="nav-link" href="maps/auth/signUp">SIGN UP</a>
+			</li>
+			
+		</ul>
+	</div>
+</nav>
+
+		<main role="main" class="container mt-md-5">
+			<section class="hero pt-md-5 pb-md-5">
+				<h1 class="red">Instantly lookup your property's zoning</h1>
+				<div class="row mt-md-5">
+					<div class="col-lg-8">
+						<div id="search" v-on:keyup.esc="clear">
+							<form v-on:submit.prevent>
+								<div class="form-row align-items-center">            
+									<div class="input-group input-group-lg shadow rounded" id="hero-search">
+										<div class="input-group-prepend">
+											<div class="input-group-text bg-transparent border-right-0 border pr-0">
+												<img src="static/assets/core/search-icon.svg">
+											</div>
+										</div>
+										<input id="search-input" type="text" v-on:keyup="search" v-on:keydown.enter.prevent.stop="go" v-on:keydown.down.prevent.stop="down" v-on:keydown.up.prevent.stop="up" class="form-control border-left-0 border rounded-right" placeholder="Search address or parcel number..." autofocus>
+										<div id="auto-complete-results" class="shadow border rounded-bottom" v-cloak v-if="results.length">
+											<auto-complete-item 
+												v-for="(res, idx) in results"
+												v-bind:result="res"
+												v-bind:key="res.id"
+												v-bind:active="activeIndex === idx"
+												v-on:mouse-enter="activeIndex = idx"
+												v-on:go="go">
+											</auto-complete-item>
+										</div>
+									</div>
+								</div>
+							</form>
+						</div>
+					</div>
+				</div>
+	        	<div class="row">
+		          <p class="pt-5 col-lg-6 lead">
+		            Scoutred organizes land use data to help you understand the capabilities and restrictions of your property
+	    	      </p>
+	        	</div>
+	      	</section>
+			<section class="mt-5 pt-md-5 pb-md-5">
+				<div class="row">
+					<div class="col d-flex align-items-center">
+						<div>
+							<h4 >DO YOU KNOW YOUR PROPERTY'S ZONING?</h4>
+							<p class="pt-3">
+								Zoning is the primary factor driving the potential of a piece of real estate. The type of use, height limits, density specifications, parking requirements, etc. all drive the potential use of a parcel.
+							</p>
+							<p>
+								Scoutred organizes zoning details on millions of parcels and visualizes the data so you can make informed decisions about the potential value of your real estate.
+							</p>
+							<p>
+								The high level due diligence research that use to take you days will now takes seconds. 
+							</p>
+							<a href="https://scoutred.com/maps" class="btn btn-outline-secondary btn-lg btn-block mt-4">Lookup Zoning</a>
+						</div>
+					</div>
+	          		<div class="col text-right d-none d-md-block">
+	            		<img src="static/assets/homepage/map-icons.png" width="65%" />
+					</div>
+				</div>
+			</section>
+			<hr class="mt-md-5 mb-md-5 pt-md-5">
+			<section class="pb-md-5">
+			    <div class="row">
+			        <div class="col text-left d-none d-md-block">
+			            <img src="static/assets/homepage/pdf-report.png" width="70%" />
+			        </div>
+			        <div class="col d-flex align-items-center">
+			            <div>
+			                <h4>CLIENT READY PDF PROPERTY REPORTS</h4>
+			                <p class="pt-3">
+			                    Take Sctoured data with you using our client ready PDF property reports. Top quality property data combined with high resolution satellite imagery and beautiful area maps form a stunning report. PDF reports include:
+			                </p>
+			                <ul>
+			                	<li>High resolution aerial</li>
+			                	<li>Detailed property attributes</li>
+			                	<li>Property zoning and associated details</li>
+			                	<li>Applicable overlay zones</li>
+			                	<li>Community plan and associated details</li>
+			                	<li>Permits on record (City of San Diego)</li>
+			                </ul>
+			                <p>
+			                    A professional report that can be shared with confidence.
+			                </p>
+							<div class="row mt-4">
+								<div class="col">
+									<a href="https://cdn.scoutred.com/web-static/download/examples/parcel-id-969509.pdf" target="_blank" class="btn btn-outline-secondary btn-lg btn-block align-middle">
+										<img src="static/assets/homepage/pdf-icon.svg" width="20" height="20" class="mr-2"><span class="align-middle">Example Report</span>
+									</a>
+								</div>
+								<div class="col mt-2 mt-md-0">
+									<a href="https://scoutred.com/maps" class="btn btn-outline-secondary btn-lg btn-block align-middle">Lookup Parcel</a>
+								</div>								
+							</div>
+			            </div>
+			        </div>
+			    </div>
+			</section>
+			<hr class="mt-md-5 mb-md-5 pt-md-5">
+			<section class="pb-md-5">
+			    <div class="row">
+			        <div class="col d-flex align-items-center">
+			            <div>
+							<h4>PERMITS: A LEADING INDICATOR</h4>
+							<p class="pt-3">
+								Permit data is a leading indicator of what's developing within a municipality and Scoutred makes it easy to query hundreds of thousands of permits.
+							</p>
+							<ul>
+								<li>Search by project ID or Assessor Parcel Number (APN)</li>
+								<li>Query the permit scope by keyword.</li>
+								<li>Filter by map bounds</li>
+								<li>Direct links to the Jurisdiction's permit record</li>
+							</ul>
+							<p>
+								 Get creative querying the easiest and most robust permit search available. Records are added weekly and you will be surprised what you find.
+							</p>
+							<a href="maps/permits" class="mt-4 btn btn-outline-secondary btn-lg btn-block align-middle">Explore Permits</a>
+			            </div>
+			        </div>
+			        <div class="col text-right d-none d-md-block">
+			        	<div class="rounded shadow">
+				            <img src="static/assets/homepage/permits.png" width="100%" class="rounded shadow"/>
+						</div>
+			        </div>
+			    </div>
+			</section>
+			<hr class="mt-md-5 mb-md-5 pt-md-5">
+			<section class="pb-md-5 text-md-center">
+				<h4>INSPECT WATER AND SEWER MAINS</h4>
+				<div class="row justify-content-md-center">
+					<div class="col col-md-10">
+						<p class="text-md-center pt-3 pb-3">With Scoutred you can inspect water and sewer main infrastructure, down to the individual lateral. No more digging through GIS files looking for specific attributes for plan submissions. What a novel idea.</p>
+					</div>
+				</div>
+				<div class="bg-dark box-shadow mx-auto rounded shadow">
+					<img src="static/assets/homepage/water-sewer-mains.png" width="100%" class="rounded"/>
+				</div>
+				<div class="mt-4 pt-4">
+					<a href="maps/sewer-main/58225/@32.7573,-117.1994,17.51" class="btn btn-outline-secondary btn-lg align-middle btn-block btn-md-inline">Explore Water & Sewer Mains</a>
+				</div>
+			</section>
+			<hr class="mt-md-5 mb-md-5 pt-md-5">
+			<section class="pb-md-5">
+			    <div class="row">
+			        <div class="col-md-6 text-left">
+			            <h4>PARCEL BOUNDARY EXTRACTS</h4>
+			            <p class="pt-3">
+			                Quickly extract parcel lot lines for use in industry leading design software like AutoCAD (DXF) and Google Maps (KML).
+			            </p>
+			            <div class="row pt-md-5">
+			                <div class="col">
+			                    <a href="https://cdn.scoutred.com/web-static/download/examples/parcel-id-923640.dxf" target="_blank" class="btn btn-outline-secondary btn-lg btn-block align-middle">
+			                        <img src="static/assets/homepage/dxf-icon.svg" width="20" height="20" class="mr-2"><span class="align-middle">Example DXF</span>
+			                    </a>
+			                </div>
+							<div class="col mt-2 mt-md-0">
+			                    <a href="https://cdn.scoutred.com/web-static/download/examples/parcel-id-820969.kml" target="_blank"  class="btn btn-outline-secondary btn-lg btn-block align-middle">
+			                        <img src="static/assets/homepage/kml-icon.svg" width="20" height="20" class="mr-2"><span class="align-middle">Example KML</span>
+			                    </a>
+			                </div>
+			            </div>
+			        </div>
+			        <div class="col-md-6 mt-3 mt-md-0">
+			            <h4>PARCEL DATA EXPORTS</h4>
+			            <p class="pt-3">
+			                Extract parcel data for use in spreadsheet programs like Microsoft Excel and Google Sheets or generate a client ready PDF property report.
+			            </p>
+			            <div class="row pt-md-5">
+							<div class="col">
+								<a href="https://cdn.scoutred.com/web-static/download/examples/parcel-id-820969.csv" class="btn btn-outline-secondary btn-lg btn-block align-middle">
+									<img src="static/assets/homepage/csv-icon.svg" width="20" height="20" class="mr-2"><span class="align-middle">Example CSV</span>
+								</a>
+							</div>
+							<div class="col mt-2 mt-md-0">
+								<a href="https://cdn.scoutred.com/web-static/download/examples/parcel-id-969509.pdf" class="btn btn-outline-secondary btn-lg btn-block align-middle">
+									<img src="static/assets/homepage/pdf-icon.svg" width="20" height="20" class="mr-2"><span class="align-middle">Example PDF</span>
+								</a>
+							</div>
+			            </div>
+			        </div>
+			    </div>
+			</section>
+			<hr class="mt-md-5 mb-md-5 pt-md-5">
+			<section class="pb-md-5">
+			    <div class="row">
+			        <div class="col-lg-6 text-left d-none d-md-block">
+			            <img src="static/assets/homepage/data-table.png" width="100%" />
+			        </div>
+			        <div class="col-lg-6 text-left">
+			            <h4>DATA FROM THE SOURCE</h4>
+			            <p class="pt-3">
+			                We pull all data directly from the authority and update regularly. We avoid using any data intermediaries so we can provide you the most accurate and up to date information.
+			            </p>
+			        </div>
+			    </div>
+			</section>
+			<hr class="mt-md-5 mb-md-5 pt-md-5">
+			<section class="mt-md-5 pt-md-5 mb-md-5">
+			    <div class="row">
+			        <div class="col-lg-12 text-left">
+			            <h4>COVERAGE</h4>
+			            <p class="pt-3">Scoutred covers San Diego County and Los Angeles County. Additional counties coming soon.</p>
+			        </div>
+			    </div>
+			    <div id="home-coverage-map" class="row-buffer-top">
+			        <div id="no-map"></div>
+			    </div>
+			</section>
+	    </main>
+		
+<footer class="mt-5 pb-5">
+	<div class="container pt-5 border-top d-none d-md-block">
+		<div class="row">
+			<div class="col">
+				<img src="static/assets/core/scoutred-icon.svg" width="25" height="25" class=""> <a href="index.html">Scoutred</a>
+				<a class="f-nav-link pl-4 pr-2" href="mailto:hello@scoutred.com">CONTACT</a>
+				<a class="f-nav-link pr-2" href="https://updates.scoutred.com">BLOG</a>
+				<a class="f-nav-link pr-2" href="terms">TERMS</a>
+				<a class="f-nav-link" href="privacy">PRIVACY</a>
+			</div>
+			<div class="col text-right">
+				<a class="f-nav-link border-right pr-3" href="pricing">PRICING</a>
+				
+					<a class="f-nav-link pl-3 pr-3" href="login">LOG IN</a>
+					<a class="f-nav-link pr-3" href="signup">SIGN UP</a>
+				
+			</div>
+		</div>
+	</div>
+	
+	<div class="container pt-5 border-top d-md-none">
+		<div class="row">
+			<div class="col text-center">
+				<img src="static/assets/core/scoutred-icon.svg" width="25" height="25" class=""> <a href="index.html">Scoutred</a>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col text-center">
+				<a class="btn btn-outline-secondary btn-block mt-3" href="pricing">PRICING</a>
+				
+					<a class="btn btn-outline-secondary btn-block" href="maps/auth/login">LOG IN</a>
+					<a class="btn btn-outline-secondary btn-block" href="maps/auth/signUp">SIGN UP</a>
+				
+			</div>
+		</div>
+		<div class="row mt-3">
+			<div class="col text-center">
+				<a class="f-nav-link pl-4 pr-2" href="mailto:hello@scoutred.com">CONTACT</a>
+				<a class="f-nav-link pr-2" href="https://updates.scoutred.com">BLOG</a>
+				<a class="f-nav-link pr-2" href="terms">TERMS</a>
+				<a class="f-nav-link" href="privacy">PRIVACY</a>
+			</div>
+		</div>
+	</div>
+</footer>
+
+		
+	
+	<script src="static/js/config.js"></script>
+
+	
+	<script src="static/lib/vue/2.5.17/vue.js"></script>
+	<script src="static/lib/axios/0.18.0/axios.min.js"></script>
+	<script src="static/lib/es6-promise/4.2.5/es6-promise.auto.min.js"></script>
+	<script src="static/lib/js-cookie/2.2.0/js-cookie.min.js"></script>
+	
+	
+	<script src="static/js/components/nav.js"></script>
+	<script src="static/js/components/notifications.js"></script>
+	
+	
+	<script>
+		(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+		ga('create', 'UA-51537973-1', 'scoutred.com');
+		ga('require', 'linkid');
+		ga('send', 'pageview');
+	</script>
+
+	
+		
+		<script>
+			!function(f,b,e,v,n,t,s)
+			{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+			n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+			if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+			n.queue=[];t=b.createElement(e);t.async=!0;
+			t.src=v;s=b.getElementsByTagName(e)[0];
+			s.parentNode.insertBefore(t,s)}(window, document,'script',
+			'https://connect.facebook.net/en_US/fbevents.js');
+			fbq('init', '1011490358883845');
+			fbq('track', 'PageView');
+		</script>
+		<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=1011490358883845&ev=PageView&noscript=1"/></noscript>
+			
+	
+
+		<script src='static/lib/mapbox-gl-js/v1.1.1/mapbox-gl.js'></script>
+		<script src="static/js/home/home.js"></script>
+	</body>
+</html>

@@ -1,0 +1,6 @@
+# Robots.txt file for domain: https://scoutred.com
+
+User-agent: *
+Disallow:
+
+Sitemap: https://scoutred.com/sitemap-index.xml
